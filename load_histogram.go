@@ -13,13 +13,14 @@ import (
 	"sync"
 	"time"
 	//"io/ioutil"
+	"flag"
 )
 
-const MIN = 0.0
-const MAX = 2
-const BUCKETS = 30
-const COUNT = 100
-const thread = 5
+var MIN float64
+var MAX float64
+var BUCKETS int
+var COUNT int
+var THREAD int
 
 type Collection struct {
 	min, max, bucketSize, width, height float64
@@ -104,8 +105,29 @@ func (c *Collection) printGraph() {
 
 func main() {
 	fmt.Printf("%d\n", 0x30)
-	REQ_ADDRESS := os.Args[1]
+	
+	var REQ_ADDRESS string
+	
+	flag.StringVar(&REQ_ADDRESS, "address", "quit", "The web address to load test, if blank, will cancel test")
+	flag.Float64Var(&MIN, "min", 0.0, "The minimum response time shown in the histogram")
+	flag.Float64Var(&MAX, "max", 2.0, "The maximum response time shown in the histogram")
+	flag.IntVar(&BUCKETS, "buckets", 30, "The number of buckets comprising the histogram")
+  flag.IntVar(&COUNT, "count", 100, "The number of request jobs")
+  flag.IntVar(&THREAD, "thread", 5, "The number of threads to spawn")
+  
+  flag.Parse()
+  
 	fmt.Printf("Requests to %s \n", REQ_ADDRESS)
+	fmt.Printf("Min time: %f \n", MIN)
+	fmt.Printf("Max time: %f \n", MAX)
+	fmt.Printf("Buckets: %d \n", BUCKETS)
+	fmt.Printf("Request count: %d \n", COUNT)
+	fmt.Printf("Thread count: %d \n", THREAD)
+	
+	if(REQ_ADDRESS == "quit"){
+	  os.Exit(1)
+	}
+	
 	coll := NewCollection(MIN, MAX, BUCKETS)
 	req_chan := make(chan int, COUNT)
 
@@ -113,7 +135,7 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	for x := 0; x < thread; x++ {
+	for x := 0; x < THREAD; x++ {
 		wg.Add(1)
 		fmt.Printf("Adding thread %d\n", x)
 		client := &http.Client{}
