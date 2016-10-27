@@ -128,7 +128,10 @@ func main() {
 	if REQ_ADDRESS == "quit" {
 		os.Exit(1)
 	}
-
+	if MIN >= MAX {
+		fmt.Printf("Invalid values for min and max ( %f >= %f )\n", MIN, MAX)
+		os.Exit(1)
+	}
 	coll := NewCollection(MIN, MAX, BUCKETS)
 	reqChan := make(chan int, COUNT)
 	resultChan := make(chan float64, COUNT)
