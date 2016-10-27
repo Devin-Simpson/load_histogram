@@ -105,29 +105,29 @@ func (c *Collection) printGraph() {
 
 func main() {
 	fmt.Printf("%d\n", 0x30)
-	
+
 	var REQ_ADDRESS string
-	
+
 	flag.StringVar(&REQ_ADDRESS, "address", "quit", "The web address to load test, if blank, will cancel test")
 	flag.Float64Var(&MIN, "min", 0.0, "The minimum response time shown in the histogram")
 	flag.Float64Var(&MAX, "max", 2.0, "The maximum response time shown in the histogram")
 	flag.IntVar(&BUCKETS, "buckets", 30, "The number of buckets comprising the histogram")
-  flag.IntVar(&COUNT, "count", 100, "The number of request jobs")
-  flag.IntVar(&THREAD, "thread", 5, "The number of threads to spawn")
-  
-  flag.Parse()
-  
+	flag.IntVar(&COUNT, "count", 100, "The number of request jobs")
+	flag.IntVar(&THREAD, "thread", 5, "The number of threads to spawn")
+
+	flag.Parse()
+
 	fmt.Printf("Requests to %s \n", REQ_ADDRESS)
 	fmt.Printf("Min time: %f \n", MIN)
 	fmt.Printf("Max time: %f \n", MAX)
 	fmt.Printf("Buckets: %d \n", BUCKETS)
 	fmt.Printf("Request count: %d \n", COUNT)
 	fmt.Printf("Thread count: %d \n", THREAD)
-	
-	if(REQ_ADDRESS == "quit"){
-	  os.Exit(1)
+
+	if REQ_ADDRESS == "quit" {
+		os.Exit(1)
 	}
-	
+
 	coll := NewCollection(MIN, MAX, BUCKETS)
 	req_chan := make(chan int, COUNT)
 
