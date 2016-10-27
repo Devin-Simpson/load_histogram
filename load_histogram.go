@@ -36,6 +36,7 @@ func NewCollection(min float64, max float64, buckets int) *Collection {
 	sizeString := strings.Split(string(out), string(" "))
 	width, _ := strconv.ParseFloat(strings.TrimSpace(sizeString[1]), 64)
 	fmt.Println(width)
+
 	if buckets == 0 {
 		b, _ := strconv.ParseInt(strings.TrimSpace(sizeString[0]), 8, 0)
 		buckets = int(b) + 5
@@ -45,7 +46,7 @@ func NewCollection(min float64, max float64, buckets int) *Collection {
 	bucketSize := (max - min) / float64(buckets)
 	for i := 0; i <= buckets; i++ {
 		// fmt.Println("buckets ", i)
-		bucketLimit := bucketSize * float64(i)
+		bucketLimit := bucketSize*float64(i) + min
 		m[bucketLimit] = 0.0
 		keys[i] = bucketLimit
 	}
@@ -66,8 +67,8 @@ func NewCollection(min float64, max float64, buckets int) *Collection {
 }
 
 func (c *Collection) add(value float64) {
-	fmt.Println("adding ", value)
 	b := c.getBucket(value)
+	fmt.Println("adding ", value, "to", b)
 	c.coll[b]++
 	c.count++
 }
@@ -76,7 +77,7 @@ func (c *Collection) getBucket(value float64) float64 {
 	if index := value - math.Mod(value, c.bucketSize); index > c.max {
 		return c.max
 	} else {
-		return index
+		return index + c.min
 	}
 	return 0.0
 }
