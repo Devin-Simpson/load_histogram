@@ -130,7 +130,8 @@ func main() {
 	}
 
 	coll := NewCollection(MIN, MAX, BUCKETS)
-	req_chan := make(chan int, COUNT)
+	reqChan := make(chan int, COUNT)
+	resultChan := make(chan float64, COUNT)
 
 	userCookie := http.Cookie{}
 
@@ -141,7 +142,7 @@ func main() {
 		fmt.Printf("Adding thread %d\n", x)
 		client := &http.Client{}
 		go func() {
-			for r := range req_chan {
+			for r := range reqChan {
 				fmt.Println(r)
 				req, err := http.NewRequest("GET", REQ_ADDRESS, nil)
 				req.AddCookie(&userCookie)
@@ -155,7 +156,7 @@ func main() {
 				if err != nil {
 					fmt.Println(err)
 				} else {
-					coll.add(d.Seconds())
+					resultChan <- d.Seconds()
 				}
 				res.Body.Close()
 			}
@@ -169,10 +170,15 @@ func main() {
 
 	//queue up jobs
 	for i := 0; i < COUNT; i++ {
-		req_chan <- i
+		reqChan <- i
 	}
-	close(req_chan)
+	close(reqChan)
+	go func() {
+		for seconds := range resultChan {
+			coll.add(seconds)
+		}
+	}()
 	wg.Wait()
-
+	close(resultChan)
 	coll.printGraph()
 }
