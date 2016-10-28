@@ -14,6 +14,7 @@ import (
 	"time"
 	//"io/ioutil"
 	"flag"
+	"golang.org/x/net/html"
 )
 
 var MIN float64
@@ -21,6 +22,8 @@ var MAX float64
 var BUCKETS int
 var COUNT int
 var THREAD int
+var REQ_ADDRESS string
+var TEST_CLIENT_PERFORMACE bool
 
 type Collection struct {
 	min, max, bucketSize, width, height float64
@@ -104,10 +107,53 @@ func (c *Collection) printGraph() {
 	fmt.Printf("%d\n", c.count)
 }
 
+func parseClientSide(res *http.Response, client *http.Client, wg *sync.WaitGroup) {
+
+	defer wg.Done()
+
+	htmlParser := html.NewTokenizer(res.Body)
+
+	for {
+
+		nextToken := htmlParser.Next()
+
+		switch {
+		case nextToken == html.ErrorToken:
+			// End of the document, we're done
+			return
+		case nextToken == html.StartTagToken:
+			t := htmlParser.Token()
+
+			isAnchor := t.Data == "script"
+			if isAnchor {
+
+				for _, a := range t.Attr {
+					if a.Key == "src" {
+						clientSideTime := time.Now()
+						res, err := client.Get(REQ_ADDRESS + a.Val)
+
+						if err != nil {
+							fmt.Println(err)
+						}
+
+						res.Body.Close()
+
+						endClientSideTime := time.Now().Sub(clientSideTime)
+						fmt.Println("finished downloading ", a.Val, ", it took ", endClientSideTime)
+
+						break
+					}
+				}
+
+			}
+		}
+
+	}
+
+}
+
 func main() {
 	fmt.Printf("%d\n", 0x30)
-
-	var REQ_ADDRESS string
 
 	flag.StringVar(&REQ_ADDRESS, "address", "quit", "The web address to load test, if blank, will cancel test")
 	flag.Float64Var(&MIN, "min", 0.0, "The minimum response time shown in the histogram")
@@ -115,6 +161,7 @@ func main() {
 	flag.IntVar(&BUCKETS, "buckets", 30, "The number of buckets comprising the histogram")
 	flag.IntVar(&COUNT, "count", 100, "The number of request jobs")
 	flag.IntVar(&THREAD, "thread", 5, "The number of threads to spawn")
+	flag.BoolVar(&TEST_CLIENT_PERFORMACE, "testClient", false, "Run client side performace test?")
 
 	flag.Parse()
 
@@ -124,6 +171,7 @@ func main() {
 	fmt.Printf("Buckets: %d \n", BUCKETS)
 	fmt.Printf("Request count: %d \n", COUNT)
 	fmt.Printf("Thread count: %d \n", THREAD)
+	fmt.Printf("Testing client: %t \n", TEST_CLIENT_PERFORMACE)
 
 	if REQ_ADDRESS == "quit" {
 		os.Exit(1)
@@ -151,11 +199,24 @@ func main() {
 				req.AddCookie(&userCookie)
 				timeNow := time.Now()
 				res, err := client.Do(req)
-				//res , err := http.Get(REQ_ADDRESS)
+				//res, err := client.Get(REQ_ADDRESS)
+
 				//res , err := http.Get(REQ_ADDRESS + "?a" + strconv.Itoa(r))
 				d := time.Now().Sub(timeNow)
 				//htmlData, _ := ioutil.ReadAll(res.Body)
 				//fmt.Println(string(htmlData))
+
+				//get client side performace
+				if TEST_CLIENT_PERFORMACE {
+					wg.Add(1)
+					totalClientSideTimeStart := time.Now()
+
+					parseClientSide(res, client, &wg)
+
+					totalClientSideTimeEnd := time.Now().Sub(totalClientSideTimeStart)
+					fmt.Println("our total client side time was ", totalClientSideTimeEnd)
+				}
+
 				if err != nil {
 					fmt.Println(err)
 				} else {
