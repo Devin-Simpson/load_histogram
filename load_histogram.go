@@ -183,6 +183,7 @@ func main() {
 	coll := NewCollection(MIN, MAX, BUCKETS)
 	reqChan := make(chan int, COUNT)
 	resultChan := make(chan float64, COUNT)
+	done := make(chan bool, 1)
 
 	userCookie := http.Cookie{}
 
@@ -241,8 +242,10 @@ func main() {
 		for seconds := range resultChan {
 			coll.add(seconds)
 		}
+		done <- true
 	}()
 	wg.Wait()
 	close(resultChan)
+	<-done
 	coll.printGraph()
 }
