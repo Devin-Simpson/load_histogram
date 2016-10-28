@@ -216,6 +216,8 @@ func main() {
 
 					totalClientSideTimeEnd := time.Now().Sub(totalClientSideTimeStart)
 					fmt.Println("our total client side time was ", totalClientSideTimeEnd)
+					fmt.Println("backend time", d)
+					d = d + totalClientSideTimeEnd
 				}
 
 				if err != nil {
