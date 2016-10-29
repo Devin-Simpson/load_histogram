@@ -44,7 +44,18 @@ func parseClientSide(res *http.Response, client *http.Client, wg *sync.WaitGroup
 				for _, a := range t.Attr {
 					if a.Key == "src" {
 						clientSideTime := time.Now()
-						res, err := client.Get(REQ_ADDRESS + a.Val)
+						var assetUrl string
+
+						//maybe better logic for this is possible?
+						if strings.HasPrefix(a.Val, REQ_ADDRESS) {
+							assetUrl = a.Val
+						} else if strings.HasPrefix(a.Val, "http") {
+							assetUrl = a.Val
+						} else {
+							assetUrl = REQ_ADDRESS + a.Val
+						}
+
+						res, err := client.Get(assetUrl)
 
 						if err != nil {
 							fmt.Println(err)
@@ -98,7 +109,6 @@ func main() {
 		fmt.Println("Address requires http://")
 		os.Exit(1)
 	}
-	fmt.Println(strings.HasPrefix(REQ_ADDRESS, "http"))
 
 	coll := NewCollection(MIN, MAX, BUCKETS)
 	reqChan := make(chan int, COUNT)
