@@ -9,11 +9,16 @@ import (
 	"strings"
 )
 
+type Stats struct {
+	min, max, total float64
+}
+
 type Collection struct {
 	min, max, bucketSize, width, height float64
 	buckets, count                      int
 	coll                                map[float64]float64
 	keys                                []float64 //maintain order of coll
+	stats                               Stats
 }
 
 func NewCollection(min float64, max float64, buckets int) *Collection {
@@ -38,6 +43,12 @@ func NewCollection(min float64, max float64, buckets int) *Collection {
 		keys[i] = bucketLimit
 	}
 
+	stats := Stats{
+		min:   -1.0,
+		max:   0,
+		total: 0,
+	}
+
 	c := Collection{
 		min:        min,
 		max:        max,
@@ -46,6 +57,7 @@ func NewCollection(min float64, max float64, buckets int) *Collection {
 		coll:       m,
 		bucketSize: bucketSize,
 		keys:       keys,
+		stats:      stats,
 	}
 
 	//get width of terminal for formatting
@@ -58,6 +70,16 @@ func (c *Collection) add(value float64) {
 	fmt.Println("adding ", value, "to", b)
 	c.coll[b]++
 	c.count++
+	c.stats.total += value
+	if c.stats.min == -1 {
+		c.stats.min = value
+	} else if c.stats.min > value {
+		c.stats.min = value
+	}
+	if c.stats.max < value {
+		c.stats.max = value
+	}
+
 }
 
 func (c *Collection) getBucket(value float64) float64 {
@@ -89,4 +111,11 @@ func (c *Collection) printGraph() {
 
 	}
 	fmt.Printf("%d\n", c.count)
+}
+
+func (c *Collection) calculateStats() {
+	fmt.Println(strings.Repeat("=", int(c.width)+40))
+	fmt.Printf("Average: %.4f\n", (c.stats.total / float64(c.count)))
+	fmt.Printf("Max Time: %.4f\n", (c.stats.max))
+	fmt.Printf("Min Time: %.4f\n", (c.stats.min))
 }

@@ -174,10 +174,11 @@ func main() {
 		for seconds := range resultChan {
 			coll.add(seconds)
 		}
-		done <- true
+		done <- true //allow all results to be proccessed before continuing
 	}()
 	wg.Wait()
 	close(resultChan)
 	<-done
 	coll.printGraph()
+	coll.calculateStats()
 }
