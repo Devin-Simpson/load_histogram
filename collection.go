@@ -1,4 +1,4 @@
-package load_histogram
+package main
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package load_histogram
+package main
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	//"io/ioutil"
 	"flag"
 	"golang.org/x/net/html"
+	"strings"
 )
 
 var MIN float64
@@ -93,6 +94,12 @@ func main() {
 		fmt.Printf("Invalid values for min and max ( %f >= %f )\n", MIN, MAX)
 		os.Exit(1)
 	}
+	if !(strings.HasPrefix(REQ_ADDRESS, "http")) {
+		fmt.Println("Address requires http://")
+		os.Exit(1)
+	}
+	fmt.Println(strings.HasPrefix(REQ_ADDRESS, "http"))
+
 	coll := NewCollection(MIN, MAX, BUCKETS)
 	reqChan := make(chan int, COUNT)
 	resultChan := make(chan float64, COUNT)
