@@ -1,4 +1,4 @@
-package main
+package collection
 
 import (
 	"fmt"
@@ -65,7 +65,7 @@ func NewCollection(min float64, max float64, buckets int) *Collection {
 	return &c
 }
 
-func (c *Collection) add(value float64) {
+func (c *Collection) Add(value float64) {
 	b := c.getBucket(value)
 	fmt.Println("adding ", value, "to", b)
 	c.coll[b]++
@@ -91,7 +91,7 @@ func (c *Collection) getBucket(value float64) float64 {
 	return 0.0
 }
 
-func (c *Collection) printGraph() {
+func (c *Collection) PrintGraph() {
 	fmt.Println(strings.Repeat("=", int(c.width)+40))
 	max := 0.0
 	for _, v := range c.coll {
@@ -113,7 +113,7 @@ func (c *Collection) printGraph() {
 	fmt.Printf("%d\n", c.count)
 }
 
-func (c *Collection) calculateStats() {
+func (c *Collection) CalculateStats() {
 	fmt.Println(strings.Repeat("=", int(c.width)+40))
 	fmt.Printf("Average: %.4f\n", (c.stats.total / float64(c.count)))
 	fmt.Printf("Max Time: %.4f\n", (c.stats.max))

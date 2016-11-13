@@ -11,6 +11,8 @@ import (
 	"flag"
 	"golang.org/x/net/html"
 	"strings"
+
+	"github.com/tejom/load_histogram/collection"
 )
 
 var MIN float64
@@ -110,7 +112,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	coll := NewCollection(MIN, MAX, BUCKETS)
+	coll := collection.NewCollection(MIN, MAX, BUCKETS)
 	reqChan := make(chan int, COUNT)
 	resultChan := make(chan float64, COUNT)
 	done := make(chan bool, 1)
@@ -172,13 +174,13 @@ func main() {
 	close(reqChan)
 	go func() {
 		for seconds := range resultChan {
-			coll.add(seconds)
+			coll.Add(seconds)
 		}
 		done <- true //allow all results to be proccessed before continuing
 	}()
 	wg.Wait()
 	close(resultChan)
 	<-done
-	coll.printGraph()
-	coll.calculateStats()
+	coll.PrintGraph()
+	coll.CalculateStats()
 }
