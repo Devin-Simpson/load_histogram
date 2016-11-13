@@ -91,6 +91,9 @@ func main() {
 	flag.BoolVar(&TEST_CLIENT_PERFORMACE, "testClient", false, "Run client side performace test?")
 
 	flag.Parse()
+	if REQ_ADDRESS == "quit" {
+		os.Exit(1)
+	}
 
 	fmt.Printf("Requests to %s \n", REQ_ADDRESS)
 	fmt.Printf("Min time: %f \n", MIN)
@@ -100,9 +103,6 @@ func main() {
 	fmt.Printf("Thread count: %d \n", THREAD)
 	fmt.Printf("Testing client: %t \n", TEST_CLIENT_PERFORMACE)
 
-	if REQ_ADDRESS == "quit" {
-		os.Exit(1)
-	}
 	if MIN >= MAX {
 		fmt.Printf("Invalid values for min and max ( %f >= %f )\n", MIN, MAX)
 		os.Exit(1)
