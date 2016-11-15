@@ -10,6 +10,7 @@ import (
 	//"io/ioutil"
 	"flag"
 	"golang.org/x/net/html"
+	"strconv"
 	"strings"
 
 	"github.com/tejom/load_histogram/collection"
@@ -22,6 +23,7 @@ var COUNT int
 var THREAD int
 var REQ_ADDRESS string
 var TEST_CLIENT_PERFORMACE bool
+var APPEND_RANDOM string
 
 func parseClientSide(res *http.Response, client *http.Client, wg *sync.WaitGroup) {
 
@@ -88,7 +90,9 @@ func main() {
 	flag.IntVar(&BUCKETS, "buckets", 30, "The number of buckets comprising the histogram")
 	flag.IntVar(&COUNT, "count", 100, "The number of request jobs")
 	flag.IntVar(&THREAD, "thread", 5, "The number of threads to spawn")
-	flag.BoolVar(&TEST_CLIENT_PERFORMACE, "testClient", false, "Run client side performace test?")
+	flag.BoolVar(&TEST_CLIENT_PERFORMACE, "testClient", false,
+		"Run client side performace test\n\tParse html response and include dependent files in benchmark time")
+	flag.StringVar(&APPEND_RANDOM, "paramName", "", "Append given parameter with a unique value")
 
 	flag.Parse()
 	if REQ_ADDRESS == "quit" {
@@ -127,14 +131,20 @@ func main() {
 		client := &http.Client{}
 		go func() {
 			for r := range reqChan {
+				var request_address string
 				fmt.Println(r)
-				req, err := http.NewRequest("GET", REQ_ADDRESS, nil)
+				if APPEND_RANDOM == "" {
+					request_address = REQ_ADDRESS
+				} else {
+					request_address = REQ_ADDRESS + "?" + APPEND_RANDOM + "=" + strconv.Itoa(r)
+				}
+				req, err := http.NewRequest("GET", request_address, nil)
+
 				req.AddCookie(&userCookie)
 				timeNow := time.Now()
 				res, err := client.Do(req)
 				//res, err := client.Get(REQ_ADDRESS)
 
-				//res , err := http.Get(REQ_ADDRESS + "?a" + strconv.Itoa(r))
 				d := time.Now().Sub(timeNow)
 				//htmlData, _ := ioutil.ReadAll(res.Body)
 				//fmt.Println(string(htmlData))
