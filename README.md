@@ -23,15 +23,20 @@ run ./load_historgram -h for a full list of available options
 
 ```
   -address string
-		The web address to load test, if blank, will cancel test (default "quit")
+    	The web address to load test, if blank, will cancel test (default "quit")
   -buckets int
-		The number of buckets comprising the histogram (default 30)
+    	The number of buckets comprising the histogram (default 30)
   -count int
-		The number of request jobs (default 100)
+    	The number of request jobs (default 100)
   -max float
-		The maximum response time shown in the histogram (default 2)
+    	The maximum response time shown in the histogram (default 2)
   -min float
-		The minimum response time shown in the histogram
+    	The minimum response time shown in the histogram
+  -paramName string
+    	Append given parameter with a unique value
+  -testClient
+    	Run client side performace test
+    	Parse html response and include dependent files in benchmark time
   -thread int
-		The number of threads to spawn (default 5)
+    	The number of threads to spawn (default 5)
 ```
