@@ -41,6 +41,7 @@ func main() {
 	flag.BoolVar(&DETAILED_LOGGING, "detailedLogging", false, "Print out detailed logs durring testing")
 
 	flag.Parse()
+	
 	if REQ_ADDRESS == "quit" {
 		os.Exit(1)
 	}
@@ -52,6 +53,7 @@ func main() {
 	fmt.Printf("Request count: %d \n", COUNT)
 	fmt.Printf("Thread count: %d \n", THREAD)
 	fmt.Printf("Testing client: %t \n", TEST_CLIENT_PERFORMACE)
+	fmt.Printf("Show detailed logging: %t \n", DETAILED_LOGGING)
 
 	if MIN >= MAX {
 		fmt.Printf("Invalid values for min and max ( %f >= %f )\n", MIN, MAX)
