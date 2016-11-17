@@ -86,8 +86,8 @@ func main() {
 
 				req.AddCookie(&userCookie)
 				timeNow := time.Now()
-				//res, err := client.Do(req)
-				res, err := client.Get(REQ_ADDRESS)
+				res, err := client.Do(req)
+				//res, err := client.Get(REQ_ADDRESS)
 
 				d := time.Now().Sub(timeNow)
 				//htmlData, _ := ioutil.ReadAll(res.Body)
