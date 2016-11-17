@@ -9,11 +9,11 @@ import (
 	"time"
 	//"io/ioutil"
 	"flag"
-	"golang.org/x/net/html"
 	"strconv"
 	"strings"
 
 	"github.com/tejom/load_histogram/collection"
+	"./clientTest"
 )
 
 var MIN float64
@@ -24,62 +24,6 @@ var THREAD int
 var REQ_ADDRESS string
 var TEST_CLIENT_PERFORMACE bool
 var APPEND_RANDOM string
-
-func parseClientSide(res *http.Response, client *http.Client, wg *sync.WaitGroup) {
-
-	defer wg.Done()
-
-	htmlParser := html.NewTokenizer(res.Body)
-
-	for {
-
-		nextToken := htmlParser.Next()
-
-		switch {
-		case nextToken == html.ErrorToken:
-			// End of the document, we're done
-			return
-		case nextToken == html.StartTagToken:
-			t := htmlParser.Token()
-
-			isAnchor := t.Data == "script"
-			if isAnchor {
-
-				for _, a := range t.Attr {
-					if a.Key == "src" {
-						clientSideTime := time.Now()
-						var assetUrl string
-
-						//maybe better logic for this is possible?
-						if strings.HasPrefix(a.Val, REQ_ADDRESS) {
-							assetUrl = a.Val
-						} else if strings.HasPrefix(a.Val, "http") {
-							assetUrl = a.Val
-						} else {
-							assetUrl = REQ_ADDRESS + a.Val
-						}
-
-						res, err := client.Get(assetUrl)
-
-						if err != nil {
-							fmt.Println(err)
-						}
-
-						res.Body.Close()
-
-						endClientSideTime := time.Now().Sub(clientSideTime)
-						fmt.Println("finished downloading ", a.Val, ", it took ", endClientSideTime)
-
-						break
-					}
-				}
-
-			}
-		}
-
-	}
-
-}
 
 func main() {
 	fmt.Printf("%d\n", 0x30)
@@ -154,8 +98,11 @@ func main() {
 					wg.Add(1)
 					totalClientSideTimeStart := time.Now()
 
-					parseClientSide(res, client, &wg)
+					clientTest.RunClientSideTest(res, client, &wg, REQ_ADDRESS)
 
+
+					//this is a bad way to sum up client time, 
+					//we need to add up  individual times to remove the testing overhead
 					totalClientSideTimeEnd := time.Now().Sub(totalClientSideTimeStart)
 					fmt.Println("our total client side time was ", totalClientSideTimeEnd)
 					fmt.Println("backend time", d)
