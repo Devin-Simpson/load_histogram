@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"load_histogram/collection"
 	"load_histogram/clientTest"
+	"load_histogram/collection"
 )
 
 var MIN float64
@@ -41,7 +41,7 @@ func main() {
 	flag.BoolVar(&DETAILED_LOGGING, "detailedLogging", false, "Print out detailed logs durring testing")
 
 	flag.Parse()
-	
+
 	if REQ_ADDRESS == "quit" {
 		os.Exit(1)
 	}
@@ -108,8 +108,7 @@ func main() {
 
 					clientTest.RunClientSideTest(res, client, &wg, REQ_ADDRESS, DETAILED_LOGGING)
 
-
-					//this is a bad way to sum up client time, 
+					//this is a bad way to sum up client time,
 					//we need to add up  individual times to remove the testing overhead
 					totalClientSideTimeEnd := time.Now().Sub(totalClientSideTimeStart)
 					fmt.Println("our total client side time was ", totalClientSideTimeEnd)
