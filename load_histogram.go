@@ -26,6 +26,8 @@ var TEST_CLIENT_PERFORMACE bool
 var APPEND_RANDOM string
 var DETAILED_LOGGING bool
 
+const TIME = "30s"
+
 func main() {
 	fmt.Printf("%d\n", 0x30)
 
@@ -125,20 +127,43 @@ func main() {
 
 				if err != nil {
 					fmt.Println(err)
+					coll.IncrementErr()
 				} else {
 					resultChan <- totalTime
+					res.Body.Close()
 				}
-				res.Body.Close()
+
 			}
 			defer wg.Done()
 		}()
 	}
 
-	//queue up jobs
-	for i := 0; i < COUNT; i++ {
-		reqChan <- i
+	run := true
+	if TIME != "" {
+		timer := time.NewTimer(time.Second * 2)
+		go func() {
+			i := 1
+			for run {
+				reqChan <- i
+				fmt.Println("adding...")
+				time.Sleep(1)
+				i += 1
+			}
+			fmt.Println("stopeed??...")
+			close(reqChan)
+			coll.SetStatTotal(float64(i))
+		}()
+		<-timer.C
+		fmt.Println("Time experired")
+		run = false
+	} else {
+		//queue up jobs
+		for i := 0; i < COUNT; i++ {
+			reqChan <- i
+		}
+		close(reqChan)
 	}
-	close(reqChan)
+
 	go func() {
 		for seconds := range resultChan {
 			coll.Add(seconds)

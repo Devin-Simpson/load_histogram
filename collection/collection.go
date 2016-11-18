@@ -11,6 +11,7 @@ import (
 
 type Stats struct {
 	min, max, total float64
+	err             int
 }
 
 type Collection struct {
@@ -47,6 +48,7 @@ func NewCollection(min float64, max float64, buckets int) *Collection {
 		min:   -1.0,
 		max:   0,
 		total: 0,
+		err:   0,
 	}
 
 	c := Collection{
@@ -100,10 +102,18 @@ func (c *Collection) PrintGraph() {
 		}
 	}
 	for _, val := range c.keys {
-		v := c.coll[val]
-		p := (v / float64(c.count)) * 100.0
-		charNum := v / max * 100
-		chars := (charNum / 100.0) * c.width
+		var chars, p, v float64
+		if c.count == 0 {
+			chars = 0.0
+		} else {
+			v := c.coll[val]
+			p := (v / float64(c.count)) * 100.0
+			fmt.Printf("v %f p %f\n", v, p)
+			charNum := v / max * 100
+			fmt.Printf("charnum %f\n", charNum)
+			chars := (charNum / 100.0) * c.width
+			fmt.Printf("chars %f\n", chars)
+		}
 		fmt.Printf("%.4f \t||", val)
 		fmt.Printf("[%s]", strings.Repeat("x", int(chars)))
 		fmt.Printf("%s", strings.Repeat(" ", int(c.width-chars)))
@@ -118,4 +128,14 @@ func (c *Collection) CalculateStats() {
 	fmt.Printf("Average: %.4f\n", (c.stats.total / float64(c.count)))
 	fmt.Printf("Max Time: %.4f\n", (c.stats.max))
 	fmt.Printf("Min Time: %.4f\n", (c.stats.min))
+	fmt.Printf("Total: %.4f\n", (c.stats.total))
+	fmt.Printf("Total Error: %d\n", c.stats.err)
+}
+
+func (c *Collection) SetStatTotal(val float64) {
+	c.stats.total = val
+}
+
+func (c *Collection) IncrementErr() {
+	c.stats.err += 1
 }
