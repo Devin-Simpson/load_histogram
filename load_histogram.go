@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"load_histogram/clientTest"
-	"load_histogram/collection"
+	"github.com/tejom/load_histogram/clientTest"
+	"github.com/tejom/load_histogram/collection"
 )
 
 var MIN float64
@@ -108,8 +108,16 @@ func main() {
 
 					clientTest.RunClientSideTest(res, client, &wg, REQ_ADDRESS, DETAILED_LOGGING)
 
-					//this is a bad way to sum up client time,
-					//we need to add up  individual times to remove the testing overhead
+					/*
+						this is a bad way to sum up client time,
+						we need to add up  individual times to remove the testing overhead
+
+						two ideas to address this,
+						extend "queue up jobs" and a request id and add the client requests to that loop,
+						sum the total time at the end
+						or have clientTest.RunClientSideTest return a time
+						-matt
+					*/
 					totalClientSideTimeEnd := time.Now().Sub(totalClientSideTimeStart)
 					fmt.Println("our total client side time was ", totalClientSideTimeEnd)
 					fmt.Println("backend time", d)
@@ -125,10 +133,6 @@ func main() {
 			}
 			defer wg.Done()
 		}()
-		//		cmd := exec.Command("clear")
-		//		cmd.Stdout = os.Stdout
-		//		cmd.Run()
-		//		coll.printGraph()
 	}
 
 	//queue up jobs

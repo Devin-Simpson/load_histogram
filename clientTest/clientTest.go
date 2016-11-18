@@ -2,25 +2,25 @@ package clientTest
 
 import (
 	"fmt"
-	"net/http"
-	"time"
-	"sync"
-	"strings"
 	"golang.org/x/net/html"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
 )
 
 var urlElements map[string]bool
 var urlAttributes map[string]bool
 
-// set op the data common to all client side tests before load test is ran
-func SetUpClientTesting(){
+// set up the data common to all client side tests before load test is ran
+func SetUpClientTesting() {
 	//create a map of every element in the DOM that might have a url to follow (maybe better way to do this)
 	urlElements = make(map[string]bool)
 
-	urlElements["script"] = true;
-	urlElements["img"] = true;
-	urlElements["link"] = true;
-	urlElements["frame"] = true;
+	urlElements["script"] = true
+	urlElements["img"] = true
+	urlElements["link"] = true
+	urlElements["frame"] = true
 
 	//these are the specific attributes on a DOM element that point to a url which we want to download
 	urlAttributes = make(map[string]bool)
@@ -74,9 +74,9 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 						res.Body.Close()
 
 						endClientSideTime := time.Now().Sub(clientSideTime)
-						
-						if DETAILED_LOGGING{
-							fmt.Println("finished downloading a ", token.Data , " file: ",  attribute.Val, ", it took ", endClientSideTime)
+
+						if DETAILED_LOGGING {
+							fmt.Println("finished downloading a ", token.Data, " file: ", attribute.Val, ", it took ", endClientSideTime)
 						}
 
 						break
