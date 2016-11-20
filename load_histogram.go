@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	//"bufio"
@@ -25,8 +26,30 @@ var REQ_ADDRESS string
 var TEST_CLIENT_PERFORMACE bool
 var APPEND_RANDOM string
 var DETAILED_LOGGING bool
+var TIME string
 
-const TIME = "30s"
+func parseTime(t string) (int, error) {
+	chars := len(t)
+	var err error = nil
+	var seconds int
+	var s string
+
+	if strings.HasSuffix(t, "s") || strings.HasSuffix(t, "S") {
+		s = t[:chars-1]
+	}
+	if strings.HasSuffix(t, "m") || strings.HasSuffix(t, "M") {
+		s = t[:chars-1]
+	}
+
+	seconds, err = strconv.Atoi(s)
+
+	if err != nil {
+		return -1, errors.New("unparseable value")
+	}
+
+	return seconds, nil
+
+}
 
 func main() {
 	fmt.Printf("%d\n", 0x30)
@@ -41,6 +64,7 @@ func main() {
 		"Run client side performace test\n\tParse html response and include dependent files in benchmark time")
 	flag.StringVar(&APPEND_RANDOM, "paramName", "", "Append given parameter with a unique value")
 	flag.BoolVar(&DETAILED_LOGGING, "detailedLogging", false, "Print out detailed logs durring testing")
+	flag.StringVar(&TIME, "time", "", "Set time to run for, default to seconds,(s,m), Will override count setting")
 
 	flag.Parse()
 
@@ -49,10 +73,14 @@ func main() {
 	}
 
 	fmt.Printf("Requests to %s \n", REQ_ADDRESS)
-	fmt.Printf("Min time: %f \n", MIN)
-	fmt.Printf("Max time: %f \n", MAX)
+	fmt.Printf("Min bucket time: %f \n", MIN)
+	fmt.Printf("Max bucket time: %f \n", MAX)
 	fmt.Printf("Buckets: %d \n", BUCKETS)
-	fmt.Printf("Request count: %d \n", COUNT)
+	if TIME == "" {
+		fmt.Printf("Request count: %d \n", COUNT)
+	} else {
+		fmt.Printf("Run for: %s \n", TIME)
+	}
 	fmt.Printf("Thread count: %d \n", THREAD)
 	fmt.Printf("Testing client: %t \n", TEST_CLIENT_PERFORMACE)
 	fmt.Printf("Show detailed logging: %t \n", DETAILED_LOGGING)
@@ -71,7 +99,7 @@ func main() {
 	}
 
 	coll := collection.NewCollection(MIN, MAX, BUCKETS)
-	reqChan := make(chan int, COUNT)
+	reqChan := make(chan int, THREAD+1)
 	resultChan := make(chan float64, COUNT)
 	done := make(chan bool, 1)
 
@@ -84,9 +112,10 @@ func main() {
 		fmt.Printf("Adding thread %d\n", x)
 		client := &http.Client{}
 		go func() {
+			fmt.Println("go reqesuest started")
 			for r := range reqChan {
 				var request_address string
-				fmt.Println(r)
+				fmt.Println("#", r)
 				if APPEND_RANDOM == "" {
 					request_address = REQ_ADDRESS
 				} else {
@@ -96,8 +125,8 @@ func main() {
 
 				req.AddCookie(&userCookie)
 				timeNow := time.Now()
-				//res, err := client.Do(req)
-				res, err := client.Get(REQ_ADDRESS)
+				res, err := client.Do(req)
+				//res, err := client.Get(REQ_ADDRESS)
 
 				d := time.Now().Sub(timeNow)
 				//htmlData, _ := ioutil.ReadAll(res.Body)
@@ -140,22 +169,30 @@ func main() {
 
 	run := true
 	if TIME != "" {
-		timer := time.NewTimer(time.Second * 2)
+		totalSeconds, err := parseTime(TIME)
+		if err != nil {
+			fmt.Println("Invalid time: ", TIME)
+			os.Exit(1)
+		}
+		timer := time.NewTimer(time.Second * time.Duration(totalSeconds))
 		go func() {
 			i := 1
 			for run {
 				reqChan <- i
 				fmt.Println("adding...")
-				time.Sleep(1)
+				//time.Sleep(1)
 				i += 1
 			}
-			fmt.Println("stopeed??...")
+			fmt.Println("stoped??...")
 			close(reqChan)
-			coll.SetStatTotal(float64(i))
+			coll.SetStatTotal(i)
 		}()
-		<-timer.C
-		fmt.Println("Time experired")
-		run = false
+		go func() {
+			//wait to turn timer off without blocking
+			<-timer.C
+			fmt.Println("Time experired")
+			run = false
+		}()
 	} else {
 		//queue up jobs
 		for i := 0; i < COUNT; i++ {
