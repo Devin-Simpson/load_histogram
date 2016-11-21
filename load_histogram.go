@@ -100,13 +100,12 @@ func main() {
 				d := time.Now().Sub(timeNow)
 				//htmlData, _ := ioutil.ReadAll(res.Body)
 				//fmt.Println(string(htmlData))
-
+				totalClientSideTime := 0.0
 				//get client side performace
 				if TEST_CLIENT_PERFORMACE {
 					wg.Add(1)
-					totalClientSideTimeStart := time.Now()
 
-					clientTest.RunClientSideTest(res, client, &wg, REQ_ADDRESS, DETAILED_LOGGING)
+					totalClientSideTime = clientTest.RunClientSideTest(res, client, &wg, REQ_ADDRESS, DETAILED_LOGGING)
 
 					/*
 						this is a bad way to sum up client time,
@@ -118,16 +117,16 @@ func main() {
 						or have clientTest.RunClientSideTest return a time
 						-matt
 					*/
-					totalClientSideTimeEnd := time.Now().Sub(totalClientSideTimeStart)
-					fmt.Println("our total client side time was ", totalClientSideTimeEnd)
-					fmt.Println("backend time", d)
-					d = d + totalClientSideTimeEnd
+					fmt.Println("our total client side time was ", totalClientSideTime)
 				}
+				fmt.Println("backend time", d)
+				totalTime := d.Seconds() + totalClientSideTime
+				fmt.Println("total time ", totalTime)
 
 				if err != nil {
 					fmt.Println(err)
 				} else {
-					resultChan <- d.Seconds()
+					resultChan <- totalTime
 				}
 				res.Body.Close()
 			}
