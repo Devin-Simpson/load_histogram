@@ -31,11 +31,13 @@ func SetUpClientTesting() {
 
 }
 
-func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGroup, REQ_ADDRESS string, DETAILED_LOGGING bool) {
+func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGroup, REQ_ADDRESS string, DETAILED_LOGGING bool) float64 {
 
 	defer wg.Done()
 
 	htmlParser := html.NewTokenizer(res.Body)
+
+	totalClientTime := 0.0
 
 	for {
 
@@ -44,7 +46,7 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 		switch {
 		case nextToken == html.ErrorToken:
 			// End of the document, we're done
-			return
+			return totalClientTime
 		case nextToken == html.StartTagToken:
 			token := htmlParser.Token()
 
@@ -75,6 +77,8 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 
 						endClientSideTime := time.Now().Sub(clientSideTime)
 
+						totalClientTime = totalClientTime + endClientSideTime.Seconds()
+
 						if DETAILED_LOGGING {
 							fmt.Println("finished downloading a ", token.Data, " file: ", attribute.Val, ", it took ", endClientSideTime)
 						}
@@ -87,5 +91,7 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 		}
 
 	}
+
+	return totalClientTime
 
 }
