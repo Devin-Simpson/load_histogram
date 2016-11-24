@@ -22,12 +22,15 @@ Each bucket is from the number to the next number. 0.00-0.666 in the above examp
 run ./load_historgram -h for a full list of available options
 
 ```
+Usage of ./load_histogram:
   -address string
     	The web address to load test, if blank, will cancel test (default "quit")
   -buckets int
     	The number of buckets comprising the histogram (default 30)
   -count int
     	The number of request jobs (default 100)
+  -detailedLogging
+    	Print out detailed logs durring testing
   -max float
     	The maximum response time shown in the histogram (default 2)
   -min float
@@ -36,7 +39,9 @@ run ./load_historgram -h for a full list of available options
     	Append given parameter with a unique value
   -testClient
     	Run client side performace test
-    	Parse html response and include dependent files in benchmark time
+	Parse html response and include dependent files in benchmark time
   -thread int
     	The number of threads to spawn (default 5)
+  -time string
+    	Set time to run for, default to seconds,(s,m), Will override count setting
 ```
