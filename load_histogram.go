@@ -14,8 +14,6 @@ import (
 	"strings"
 
 	"github.com/robertkrimen/otto"
-
-	//"github.com/tejom/load_histogram/clientTest"
 	"github.com/tejom/load_histogram/collection"
 )
 
