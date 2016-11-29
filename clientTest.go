@@ -1,4 +1,4 @@
-package clientTest
+package main
 
 import (
 	"fmt"
@@ -37,7 +37,7 @@ func SetUpClientTesting() {
 
 }
 
-func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGroup, REQ_ADDRESS string, DETAILED_LOGGING bool, jsvm *otto.Otto) float64 {
+func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGroup, jsvm *otto.Otto) float64 {
 
 	defer wg.Done()
 

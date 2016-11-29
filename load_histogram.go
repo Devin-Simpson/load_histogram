@@ -15,20 +15,22 @@ import (
 
 	"github.com/robertkrimen/otto"
 
-	"github.com/tejom/load_histogram/clientTest"
+	//"github.com/tejom/load_histogram/clientTest"
 	"github.com/tejom/load_histogram/collection"
 )
 
-var MIN float64
-var MAX float64
-var BUCKETS int
-var COUNT int
-var THREAD int
-var REQ_ADDRESS string
-var TEST_CLIENT_PERFORMACE bool
-var APPEND_RANDOM string
-var DETAILED_LOGGING bool
-var TIME string
+var (
+ 	MIN float64
+ 	MAX float64
+ 	BUCKETS int
+ 	COUNT int
+ 	THREAD int
+ 	REQ_ADDRESS string
+ 	TEST_CLIENT_PERFORMACE bool
+ 	APPEND_RANDOM string
+ 	DETAILED_LOGGING bool
+ 	TIME string
+ )
 
 func parseTime(t string) (int, error) {
 	chars := len(t)
@@ -97,7 +99,7 @@ func main() {
 	}
 
 	if TEST_CLIENT_PERFORMACE {
-		clientTest.SetUpClientTesting()
+		SetUpClientTesting()
 	}
 
 	coll := collection.NewCollection(MIN, MAX, BUCKETS)
@@ -141,7 +143,7 @@ func main() {
 				if TEST_CLIENT_PERFORMACE {
 					wg.Add(1)
 
-					totalClientSideTime = clientTest.RunClientSideTest(res, client, &wg, REQ_ADDRESS, DETAILED_LOGGING, jsvm)
+					totalClientSideTime = RunClientSideTest(res, client, &wg, jsvm)
 					fmt.Println("our total client side time was ", totalClientSideTime)
 				}
 				fmt.Println("backend time", d)
