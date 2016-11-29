@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/robertkrimen/otto"
+
 	"github.com/tejom/load_histogram/clientTest"
 	"github.com/tejom/load_histogram/collection"
 )
@@ -111,6 +113,9 @@ func main() {
 		wg.Add(1)
 		fmt.Printf("Adding thread %d\n", x)
 		client := &http.Client{}
+
+		//create one instance of a javascript vm per thread
+		jsvm := otto.New()
 		go func() {
 			fmt.Println("go reqesuest started")
 			for r := range reqChan {
@@ -136,18 +141,7 @@ func main() {
 				if TEST_CLIENT_PERFORMACE {
 					wg.Add(1)
 
-					totalClientSideTime = clientTest.RunClientSideTest(res, client, &wg, REQ_ADDRESS, DETAILED_LOGGING)
-
-					/*
-						this is a bad way to sum up client time,
-						we need to add up  individual times to remove the testing overhead
-
-						two ideas to address this,
-						extend "queue up jobs" and a request id and add the client requests to that loop,
-						sum the total time at the end
-						or have clientTest.RunClientSideTest return a time
-						-matt
-					*/
+					totalClientSideTime = clientTest.RunClientSideTest(res, client, &wg, REQ_ADDRESS, DETAILED_LOGGING, jsvm)
 					fmt.Println("our total client side time was ", totalClientSideTime)
 				}
 				fmt.Println("backend time", d)
