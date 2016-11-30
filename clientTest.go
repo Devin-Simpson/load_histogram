@@ -70,7 +70,7 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 
 						downloadedElement.Body.Close()
 						var logMessage = "finished downloading a " + token.Data + " file: " + attribute.Val + ", it took "
-						totalClientTime = LogElapstedTime(clientSideTime, totalClientTime, logMessage, DETAILED_LOGGING)
+						totalClientTime = LogElapstedTime(clientSideTime, totalClientTime, logMessage)
 
 						break
 					}
@@ -93,7 +93,7 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 
 						var logMessageDownload = "downloaded some JS! from " + attribute.Val + " it took "
 
-						totalClientTime = LogElapstedTime(clientSideTimeDownLoad, totalClientTime, logMessageDownload, DETAILED_LOGGING)
+						totalClientTime = LogElapstedTime(clientSideTimeDownLoad, totalClientTime, logMessageDownload)
 
 						//now execute the javascript and record time to execute + time to download
 						if script != nil {
@@ -102,7 +102,7 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 							jsvm.Run(script)
 							var logMessageJS = "ran some JS! it took "
 
-							totalClientTime = LogElapstedTime(totalClientTimeJS, totalClientTime, logMessageJS, DETAILED_LOGGING)
+							totalClientTime = LogElapstedTime(totalClientTimeJS, totalClientTime, logMessageJS)
 
 						} else {
 							fmt.Println("ERROR, No js code to execute")
@@ -136,7 +136,7 @@ func AssetURL(url string, REQ_ADDRESS string) string {
 	return assetUrl
 }
 
-func LogElapstedTime(clientSideTime time.Time, totalClientTime float64, logMessage string, DETAILED_LOGGING bool) float64 {
+func LogElapstedTime(clientSideTime time.Time, totalClientTime float64, logMessage string) float64 {
 
 	endClientSideTime := time.Now().Sub(clientSideTime)
 	totalClientTime = totalClientTime + endClientSideTime.Seconds()
