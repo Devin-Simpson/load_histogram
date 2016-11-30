@@ -15,7 +15,7 @@ var urlElements map[string]bool
 var urlAttributes map[string]bool
 
 //create a seperate variable for javascript, as we want to execute the javascript (the inline block and downloaded JS)
-var	jsTag string = "script"
+var jsTag string = "script"
 
 // set up the data common to all client side tests before load test is ran
 func SetUpClientTesting() {
@@ -32,8 +32,6 @@ func SetUpClientTesting() {
 	urlAttributes["data-src"] = true
 	urlAttributes["src"] = true
 	urlAttributes["href"] = true
-
-	
 
 }
 
@@ -54,14 +52,14 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 		case nextToken == html.ErrorToken:
 			// End of the document, we're done
 			return totalClientTime
-		case nextToken == html.StartTagToken || nextToken == html.SelfClosingTagToken :
+		case nextToken == html.StartTagToken || nextToken == html.SelfClosingTagToken:
 			// case where we are downloading a non javascript file
 			isAnchor := urlElements[token.Data]
 			if isAnchor {
-				
+
 				for _, attribute := range token.Attr {
 					if urlAttributes[attribute.Key] {
-						
+
 						clientSideTime := time.Now()
 						var assetUrl = AssetURL(attribute.Val, REQ_ADDRESS)
 						downloadedElement, err := client.Get(assetUrl)
@@ -71,14 +69,14 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 						}
 
 						downloadedElement.Body.Close()
-						var logMessage = "finished downloading a "+ token.Data+ " file: "+ attribute.Val+ ", it took "
+						var logMessage = "finished downloading a " + token.Data + " file: " + attribute.Val + ", it took "
 						totalClientTime = LogElapstedTime(clientSideTime, totalClientTime, logMessage, DETAILED_LOGGING)
 
 						break
 					}
 				}
 
-			}else if token.Data == jsTag {
+			} else if token.Data == jsTag {
 
 				for _, attribute := range token.Attr {
 
@@ -106,8 +104,7 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 
 							totalClientTime = LogElapstedTime(totalClientTimeJS, totalClientTime, logMessageJS, DETAILED_LOGGING)
 
-							
-						}else{
+						} else {
 							fmt.Println("ERROR, No js code to execute")
 						}
 
@@ -117,7 +114,7 @@ func RunClientSideTest(res *http.Response, client *http.Client, wg *sync.WaitGro
 				}
 
 			}
-			
+
 		}
 
 	}
@@ -139,7 +136,7 @@ func AssetURL(url string, REQ_ADDRESS string) string {
 	return assetUrl
 }
 
-func LogElapstedTime(clientSideTime time.Time, totalClientTime float64, logMessage string, DETAILED_LOGGING bool) float64{
+func LogElapstedTime(clientSideTime time.Time, totalClientTime float64, logMessage string, DETAILED_LOGGING bool) float64 {
 
 	endClientSideTime := time.Now().Sub(clientSideTime)
 	totalClientTime = totalClientTime + endClientSideTime.Seconds()
