@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	//"bufio"
@@ -31,31 +30,6 @@ var (
 	DETAILED_LOGGING       bool
 	TIME                   string
 )
-
-var TEST = "string"
-
-func parseTime(t string) (int, error) {
-	chars := len(t)
-	var err error = nil
-	var seconds int
-	var s string
-
-	if strings.HasSuffix(t, "s") || strings.HasSuffix(t, "S") {
-		s = t[:chars-1]
-	}
-	if strings.HasSuffix(t, "m") || strings.HasSuffix(t, "M") {
-		s = t[:chars-1]
-	}
-
-	seconds, err = strconv.Atoi(s)
-
-	if err != nil {
-		return -1, errors.New("unparseable value")
-	}
-
-	return seconds, nil
-
-}
 
 func main() {
 	fmt.Printf("%d\n", 0x30)
@@ -114,12 +88,14 @@ func main() {
 	var wg sync.WaitGroup
 	client := &http.Client{
 		Transport: &http.Transport{
-			MaxIdleConns:        5, //what is optimal for this?
-			MaxIdleConnsPerHost: 0, //what is optimal for this?
+			/* not sure what is optimal for these
+			or just make them cli arguments */
+			MaxIdleConns:        5,
+			MaxIdleConnsPerHost: 0,
 		},
 		Timeout: 5 * time.Second, //make this a variable
 	}
-
+	programRunTimeStart := time.Now()
 	for x := 0; x < THREAD; x++ {
 		wg.Add(1)
 		fmt.Printf("Adding thread %d\n", x)
@@ -159,11 +135,12 @@ func main() {
 				//fmt.Println("backend time", d)
 				totalTime := d.Seconds() + totalClientSideTime
 				//fmt.Println("total time ", totalTime)
-				defer res.Body.Close()
+
 				if err != nil {
 					fmt.Println(err)
 					coll.IncrementErr()
 				} else {
+					defer res.Body.Close()
 					resultChan <- totalTime
 					//ensures the tcp connection will be reused
 
@@ -179,12 +156,12 @@ func main() {
 
 	run := true
 	if TIME != "" {
-		totalSeconds, err := parseTime(TIME)
+		totalSeconds, err := time.ParseDuration(TIME)
 		if err != nil {
 			fmt.Println("Invalid time: ", TIME)
 			os.Exit(1)
 		}
-		timer := time.NewTimer(time.Second * time.Duration(totalSeconds))
+		timer := time.NewTimer(totalSeconds)
 		go func() {
 			i := 1
 			for run {
@@ -218,8 +195,11 @@ func main() {
 		done <- true //allow all results to be proccessed before continuing
 	}()
 	wg.Wait()
+	totalRunTime := time.Now().Sub(programRunTimeStart)
+	coll.SetRunTime(totalRunTime)
 	close(resultChan)
 	<-done
+
 	coll.PrintGraph()
 	coll.CalculateStats()
 }

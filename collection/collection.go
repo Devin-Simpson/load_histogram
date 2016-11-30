@@ -7,11 +7,12 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Stats struct {
-	min, max, total float64
-	err, reqCount   int
+	min, max, total, totalRunTime float64
+	err, reqCount                 int
 }
 
 type Collection struct {
@@ -126,6 +127,8 @@ func (c *Collection) CalculateStats() {
 	fmt.Printf("Max Time: %.4f\n", (c.stats.max))
 	fmt.Printf("Min Time: %.4f\n", (c.stats.min))
 	fmt.Printf("Total: %d\n", (c.stats.reqCount))
+	fmt.Printf("Req/sec: %.4f\n", (float64(c.stats.reqCount) / c.stats.totalRunTime))
+	fmt.Printf("Real run time %.4f seconds\n", c.stats.totalRunTime)
 	fmt.Printf("Total Error: %d\n", c.stats.err)
 }
 
@@ -135,4 +138,8 @@ func (c *Collection) SetStatTotal(val int) {
 
 func (c *Collection) IncrementErr() {
 	c.stats.err += 1
+}
+
+func (c *Collection) SetRunTime(t time.Duration) {
+	c.stats.totalRunTime = t.Seconds()
 }
