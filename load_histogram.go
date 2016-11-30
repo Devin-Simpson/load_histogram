@@ -5,30 +5,34 @@ import (
 	"fmt"
 	"net/http"
 	//"bufio"
-	"os"
-	"sync"
-	"time"
-	//"io/ioutil"
 	"flag"
+	"io"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/robertkrimen/otto"
+
 	"github.com/tejom/load_histogram/collection"
 )
 
 var (
- 	MIN float64
- 	MAX float64
- 	BUCKETS int
- 	COUNT int
- 	THREAD int
- 	REQ_ADDRESS string
- 	TEST_CLIENT_PERFORMACE bool
- 	APPEND_RANDOM string
- 	DETAILED_LOGGING bool
- 	TIME string
- )
+	MIN                    float64
+	MAX                    float64
+	BUCKETS                int
+	COUNT                  int
+	THREAD                 int
+	REQ_ADDRESS            string
+	TEST_CLIENT_PERFORMACE bool
+	APPEND_RANDOM          string
+	DETAILED_LOGGING       bool
+	TIME                   string
+)
+
+var TEST = "string"
 
 func parseTime(t string) (int, error) {
 	chars := len(t)
@@ -101,26 +105,33 @@ func main() {
 	}
 
 	coll := collection.NewCollection(MIN, MAX, BUCKETS)
-	reqChan := make(chan int, THREAD+1)
+	reqChan := make(chan int, THREAD*2+1)
 	resultChan := make(chan float64, COUNT)
 	done := make(chan bool, 1)
 
 	userCookie := http.Cookie{}
 
 	var wg sync.WaitGroup
+	client := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConns:        5, //what is optimal for this?
+			MaxIdleConnsPerHost: 0, //what is optimal for this?
+		},
+		Timeout: 5 * time.Second, //make this a variable
+	}
 
 	for x := 0; x < THREAD; x++ {
 		wg.Add(1)
 		fmt.Printf("Adding thread %d\n", x)
-		client := &http.Client{}
 
 		//create one instance of a javascript vm per thread
 		jsvm := otto.New()
+
 		go func() {
 			fmt.Println("go reqesuest started")
 			for r := range reqChan {
 				var request_address string
-				fmt.Println("#", r)
+				fmt.Println("start #", r)
 				if APPEND_RANDOM == "" {
 					request_address = REQ_ADDRESS
 				} else {
@@ -130,8 +141,8 @@ func main() {
 
 				req.AddCookie(&userCookie)
 				timeNow := time.Now()
-				res, err := client.Do(req)
-				//res, err := client.Get(REQ_ADDRESS)
+				//res, err := client.Do(req)
+				res, err := client.Get(REQ_ADDRESS)
 
 				d := time.Now().Sub(timeNow)
 				//htmlData, _ := ioutil.ReadAll(res.Body)
@@ -142,20 +153,25 @@ func main() {
 					wg.Add(1)
 
 					totalClientSideTime = RunClientSideTest(res, client, &wg, jsvm)
+
 					fmt.Println("our total client side time was ", totalClientSideTime)
 				}
-				fmt.Println("backend time", d)
+				//fmt.Println("backend time", d)
 				totalTime := d.Seconds() + totalClientSideTime
-				fmt.Println("total time ", totalTime)
-
+				//fmt.Println("total time ", totalTime)
+				defer res.Body.Close()
 				if err != nil {
 					fmt.Println(err)
 					coll.IncrementErr()
 				} else {
 					resultChan <- totalTime
-					res.Body.Close()
-				}
+					//ensures the tcp connection will be reused
 
+					io.Copy(ioutil.Discard, res.Body)
+					ioutil.ReadAll(res.Body)
+
+				}
+				//fmt.Println("\tdone #", r)
 			}
 			defer wg.Done()
 		}()
@@ -173,7 +189,7 @@ func main() {
 			i := 1
 			for run {
 				reqChan <- i
-				fmt.Println("adding...")
+				//fmt.Println("adding...")
 				//time.Sleep(1)
 				i += 1
 			}

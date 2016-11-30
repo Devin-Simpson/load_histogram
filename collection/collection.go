@@ -69,7 +69,7 @@ func NewCollection(min float64, max float64, buckets int) *Collection {
 
 func (c *Collection) Add(value float64) {
 	b := c.getBucket(value)
-	fmt.Println("adding ", value, "to", b)
+	//fmt.Println("adding ", value, "to", b)
 	c.coll[b]++
 	c.stats.reqCount++
 	c.stats.total += value
