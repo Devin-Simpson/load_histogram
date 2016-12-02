@@ -69,7 +69,7 @@ func main() {
 		fmt.Printf("Invalid values for min and max ( %f >= %f )\n", MIN, MAX)
 		os.Exit(1)
 	}
-	if !(strings.HasPrefix(REQ_ADDRESS, "http")) {
+	if !(strings.HasPrefix(REQ_ADDRESS, "http://")) {
 		fmt.Println("Address requires http://")
 		os.Exit(1)
 	}
@@ -121,35 +121,42 @@ func main() {
 				res, err := client.Get(REQ_ADDRESS)
 
 				d := time.Now().Sub(timeNow)
-				//htmlData, _ := ioutil.ReadAll(res.Body)
-				//fmt.Println(string(htmlData))
-				totalClientSideTime := 0.0
-				//get client side performace
-				if TEST_CLIENT_PERFORMACE {
-					wg.Add(1)
-
-					totalClientSideTime = RunClientSideTest(res, client, &wg, jsvm)
-
-					fmt.Println("our total client side time was ", totalClientSideTime)
-				}
-				//fmt.Println("backend time", d)
-				totalTime := d.Seconds() + totalClientSideTime
-				//fmt.Println("total time ", totalTime)
 
 				if err != nil {
 					fmt.Println(err)
 					coll.IncrementErr()
+
+					if TEST_CLIENT_PERFORMACE {
+						fmt.Println(" aborting client side test...")
+					}
+
 				} else {
+
+					totalClientSideTime := 0.0
+
+					//get client side performace
+					if TEST_CLIENT_PERFORMACE {
+						wg.Add(1)
+
+						totalClientSideTime = RunClientSideTest(res, client, &wg, jsvm)
+
+						fmt.Println("our total client side time was ", totalClientSideTime)
+					}
+
+					totalTime := d.Seconds() + totalClientSideTime
+
 					defer res.Body.Close()
 					resultChan <- totalTime
+
 					//ensures the tcp connection will be reused
 
 					io.Copy(ioutil.Discard, res.Body)
 					ioutil.ReadAll(res.Body)
 
 				}
-				//fmt.Println("\tdone #", r)
+
 			}
+
 			defer wg.Done()
 		}()
 	}
