@@ -69,7 +69,7 @@ func main() {
 		fmt.Printf("Invalid values for min and max ( %f >= %f )\n", MIN, MAX)
 		os.Exit(1)
 	}
-	if !(strings.HasPrefix(REQ_ADDRESS, "http://")) {
+	if !(strings.HasPrefix(REQ_ADDRESS, "http://") || strings.HasPrefix(REQ_ADDRESS, "https://")) {
 		fmt.Println("Address requires http://")
 		os.Exit(1)
 	}
