@@ -104,7 +104,8 @@ func (c *Collection) PrintGraph() {
 	}
 	for _, val := range c.keys {
 		var chars, p, v float64
-		if c.stats.reqCount == 0 {
+
+		if (c.stats.reqCount - c.stats.err) == 0 {
 			chars = 0.0
 		} else {
 			v = c.coll[val]
@@ -135,9 +136,13 @@ func (c *Collection) CalculateStats() {
 func (c *Collection) SetStatTotal(val int) {
 	c.stats.reqCount = val
 }
+func (c *Collection) GetStatTotal() int {
+	return c.stats.reqCount
+}
 
 func (c *Collection) IncrementErr() {
 	c.stats.err += 1
+	c.stats.reqCount++
 }
 
 func (c *Collection) SetRunTime(t time.Duration) {

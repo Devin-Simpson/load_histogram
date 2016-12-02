@@ -5,15 +5,16 @@ import (
 	"net/http"
 	//"bufio"
 	"flag"
+	"github.com/robertkrimen/otto"
 	"io"
 	"io/ioutil"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
-
-	"github.com/robertkrimen/otto"
 
 	"github.com/tejom/load_histogram/collection"
 )
@@ -82,6 +83,8 @@ func main() {
 	reqChan := make(chan int, THREAD*2+1)
 	resultChan := make(chan float64, COUNT)
 	done := make(chan bool, 1)
+	breakLoop := false
+	run := true //set incase time is set
 
 	userCookie := http.Cookie{}
 
@@ -96,6 +99,23 @@ func main() {
 		Timeout: 5 * time.Second, //make this a variable
 	}
 	programRunTimeStart := time.Now()
+
+	//set up handling signals
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		wg.Add(1)
+		if TIME != "" {
+			run = false
+		} else {
+			close(reqChan)
+		}
+		breakLoop = true
+		wg.Done()
+
+	}()
+
 	for x := 0; x < THREAD; x++ {
 		wg.Add(1)
 		fmt.Printf("Adding thread %d\n", x)
@@ -106,8 +126,10 @@ func main() {
 		go func() {
 			fmt.Println("go reqesuest started")
 			for r := range reqChan {
-				var request_address string
 				fmt.Println("start #", r)
+
+				var request_address string
+
 				if APPEND_RANDOM == "" {
 					request_address = REQ_ADDRESS
 				} else {
@@ -149,19 +171,23 @@ func main() {
 					resultChan <- totalTime
 
 					//ensures the tcp connection will be reused
-
 					io.Copy(ioutil.Discard, res.Body)
 					ioutil.ReadAll(res.Body)
 
 				}
 
+				if breakLoop {
+					fmt.Println("breaking")
+					break
+				}
+
 			}
+			fmt.Println("defering?")
 
 			defer wg.Done()
 		}()
 	}
 
-	run := true
 	if TIME != "" {
 		totalSeconds, err := time.ParseDuration(TIME)
 		if err != nil {
@@ -171,19 +197,30 @@ func main() {
 		timer := time.NewTimer(totalSeconds)
 		go func() {
 			i := 1
+
 			for run {
+				if breakLoop {
+					fmt.Println("breaking")
+					break
+				}
 				reqChan <- i
-				//fmt.Println("adding...")
-				//time.Sleep(1)
 				i += 1
+				fmt.Println("adding to que #", i)
 			}
 			fmt.Println("stoped??...")
 			close(reqChan)
-			coll.SetStatTotal(i)
+			fmt.Println(i)
+			drainedReq := 0
+			for x := range reqChan {
+				drainedReq = drainedReq + 1
+				fmt.Println(drainedReq, "#", x)
+			}
+			fmt.Println("drained", drainedReq)
+			coll.SetStatTotal(i - drainedReq)
+
 		}()
 		go func() {
-			//wait to turn timer off without blocking
-			<-timer.C
+			<-timer.C //wait to turn timer off without blocking
 			fmt.Println("Time experired")
 			run = false
 		}()
@@ -201,10 +238,12 @@ func main() {
 		}
 		done <- true //allow all results to be proccessed before continuing
 	}()
+	fmt.Println("wg wait?")
 	wg.Wait()
 	totalRunTime := time.Now().Sub(programRunTimeStart)
 	coll.SetRunTime(totalRunTime)
 	close(resultChan)
+	fmt.Println("get to done?")
 	<-done
 
 	coll.PrintGraph()
