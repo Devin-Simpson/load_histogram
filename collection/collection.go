@@ -7,12 +7,14 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
 type Stats struct {
 	min, max, total, totalRunTime float64
-	err, reqCount                 int
+	reqCount                      int
+	err                           uint64
 }
 
 type Collection struct {
@@ -104,8 +106,7 @@ func (c *Collection) PrintGraph() {
 	}
 	for _, val := range c.keys {
 		var chars, p, v float64
-
-		if (c.stats.reqCount - c.stats.err) == 0 {
+		if (c.stats.reqCount - int(c.stats.err)) <= 0 {
 			chars = 0.0
 		} else {
 			v = c.coll[val]
@@ -141,8 +142,8 @@ func (c *Collection) GetStatTotal() int {
 }
 
 func (c *Collection) IncrementErr() {
-	c.stats.err += 1
-	c.stats.reqCount++
+	//avoid race when multiple goroutines update with an error
+	atomic.AddUint64(&c.stats.err, 1)
 }
 
 func (c *Collection) SetRunTime(t time.Duration) {

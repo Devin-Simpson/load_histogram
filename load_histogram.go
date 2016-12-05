@@ -105,14 +105,17 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigChan
-		wg.Add(1)
+
 		if TIME != "" {
 			run = false
-		} else {
-			close(reqChan)
 		}
 		breakLoop = true
-		wg.Done()
+		drainedReq := 0
+		for x := range reqChan {
+			drainedReq = drainedReq + 1
+			fmt.Println(drainedReq, "#", x)
+		}
+		fmt.Println("drained requests", drainedReq)
 
 	}()
 
@@ -177,12 +180,10 @@ func main() {
 				}
 
 				if breakLoop {
-					fmt.Println("breaking")
 					break
 				}
 
 			}
-			fmt.Println("defering?")
 
 			defer wg.Done()
 		}()
@@ -200,7 +201,6 @@ func main() {
 
 			for run {
 				if breakLoop {
-					fmt.Println("breaking")
 					break
 				}
 				reqChan <- i
@@ -209,33 +209,32 @@ func main() {
 			}
 			fmt.Println("stoped??...")
 			close(reqChan)
-			fmt.Println(i)
-			drainedReq := 0
-			for x := range reqChan {
-				drainedReq = drainedReq + 1
-				fmt.Println(drainedReq, "#", x)
-			}
-			fmt.Println("drained", drainedReq)
-			coll.SetStatTotal(i - drainedReq)
 
 		}()
 		go func() {
-			<-timer.C //wait to turn timer off without blocking
+			<-timer.C //wait for timer t expire without blocking
 			fmt.Println("Time experired")
 			run = false
 		}()
 	} else {
 		//queue up jobs
 		for i := 0; i < COUNT; i++ {
+			if breakLoop {
+				break
+			}
 			reqChan <- i
+
 		}
 		close(reqChan)
 	}
 
 	go func() {
+		count := 0
 		for seconds := range resultChan {
 			coll.Add(seconds)
+			count += 1
 		}
+		coll.SetStatTotal(count)
 		done <- true //allow all results to be proccessed before continuing
 	}()
 	fmt.Println("wg wait?")
